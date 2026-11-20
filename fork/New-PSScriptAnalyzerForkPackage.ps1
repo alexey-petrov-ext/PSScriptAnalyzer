@@ -10,7 +10,9 @@
     NuGet files and its signatures.
 
     Each entry of the zip has the time of the commit, and the entries are in ordinal order. Two
-    builds of one commit with the same .NET SDK therefore give the same bytes and the same SHA-256.
+    builds of one commit with the same .NET SDK and the same PowerShell 7 therefore give the same
+    bytes and the same SHA-256. The SDK compiles the assemblies, and the runtime of PowerShell 7
+    compresses the entries.
 
     Run it on a clean checkout of the tag, for example v1.25.0-quindos.1. The build needs the .NET
     SDK of global.json and platyPS 0.14.2 (tools/installPSResources.ps1).
@@ -55,16 +57,27 @@ if (Test-Path -LiteralPath $zip) { Remove-Item -LiteralPath $zip }
 
 $commitTime = [DateTimeOffset]::Parse((git -C $root log -1 --format=%cI HEAD))
 $prefix = $moduleRoot.FullName.Length + 1
-$files = Get-ChildItem -LiteralPath $moduleRoot.FullName -Recurse -File |
-    ForEach-Object { [pscustomobject]@{ Path = $_.FullName; Entry = $_.FullName.Substring($prefix) -replace '\\', '/' } } |
-    Sort-Object -Property Entry -Culture ([Globalization.CultureInfo]::InvariantCulture) -CaseSensitive
+$files = @{}
+foreach ($file in Get-ChildItem -LiteralPath $moduleRoot.FullName -Recurse -File) {
+    $files[$file.FullName.Substring($prefix) -replace '\\', '/'] = $file.FullName
+}
+[string[]]$entries = @($files.Keys)
+[Array]::Sort($entries, [StringComparer]::Ordinal)
 
 Add-Type -AssemblyName System.IO.Compression, System.IO.Compression.FileSystem
 $archive = [IO.Compression.ZipFile]::Open($zip, [IO.Compression.ZipArchiveMode]::Create)
 try {
-    foreach ($file in $files) {
-        $entry = [IO.Compression.ZipFileExtensions]::CreateEntryFromFile($archive, $file.Path, $file.Entry, [IO.Compression.CompressionLevel]::Optimal)
+    foreach ($entryName in $entries) {
+        # In Create mode, an entry takes its time only before its stream opens.
+        $entry = $archive.CreateEntry($entryName, [IO.Compression.CompressionLevel]::Optimal)
         $entry.LastWriteTime = $commitTime
+        $target = $entry.Open()
+        $sourceFile = [IO.File]::OpenRead($files[$entryName])
+        try { $sourceFile.CopyTo($target) }
+        finally {
+            $sourceFile.Dispose()
+            $target.Dispose()
+        }
     }
 }
 finally { $archive.Dispose() }
