@@ -20,7 +20,7 @@ only meant to fix a defect.
 
 | Branch | Change | Upstream issue / PR |
 |---|---|---|
-| `upstream/exported-function-race` | `Helper.GetExportedFunction` resolves the parameters of `Export-ModuleMember` from its static parameter metadata, and no longer calls `CommandInfo.ResolveParameter`. That call runs on the runspace of the cached command, which the rule threads and the command lookups use at the same time, and it threw a `NullReferenceException`. A parameter name that matches no parameter, or more than one, is skipped and no longer throws. The test `Tests/Engine/GetExportedFunction.tests.ps1` starts 16 callers at one barrier while 16 threads look up commands. Based on `main` at `0151b9da`. | Issue [#1351](https://github.com/PowerShell/PSScriptAnalyzer/issues/1351), PR not filed yet |
+| `upstream/exported-function-race` | `Helper.GetExportedFunction` resolves the parameters of `Export-ModuleMember` from its static parameter metadata, and no longer calls `CommandInfo.ResolveParameter`. That call runs on the runspace of the cached command, which the rule threads and the command lookups use at the same time, and it threw a `NullReferenceException`. A parameter name that matches no parameter, or more than one, is skipped and no longer throws. The test `Tests/Engine/GetExportedFunction.tests.ps1` starts 16 callers at one barrier while 16 threads look up commands. Based on `main` at `0151b9da`. | Issue [#1351](https://github.com/PowerShell/PSScriptAnalyzer/issues/1351), PR [#2304](https://github.com/PowerShell/PSScriptAnalyzer/pull/2304) |
 
 Each commit on a topic branch ends its subject with its upstream issue, as `(#1351)`. When a pull
 request merges, remove its branch from this table and from the update steps below.
