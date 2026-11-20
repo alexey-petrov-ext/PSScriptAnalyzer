@@ -87,6 +87,8 @@ PrivateData = @{
         ProjectUri = 'https://github.com/PowerShell/PSScriptAnalyzer'
         IconUri = 'https://raw.githubusercontent.com/powershell/psscriptanalyzer/main/logo.png'
         ReleaseNotes = ''
+        # Fork only: a build of this fork does not pass for the gallery release of its version.
+        Prerelease = 'quindos1'
     }
 }
 
