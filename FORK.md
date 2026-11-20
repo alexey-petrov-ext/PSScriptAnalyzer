@@ -92,8 +92,10 @@ Authenticode-signed, unlike the gallery package, so a computer with the executio
 `AllSigned` refuses it.
 
 The build needs the .NET SDK that `global.json` names and platyPS 0.14.2
-(`tools/installPSResources.ps1`). The script gives each zip entry the time of the commit, so two
-builds of one commit with the same SDK give the same SHA-256.
+(`tools/installPSResources.ps1`). The script gives each zip entry the time of the commit, and it
+writes the entries in ordinal order. Two builds of one commit with the same SDK and the same
+PowerShell 7 therefore give the same SHA-256. Build the release on the commit of its tag, because
+the time of another commit gives other bytes.
 
 The workflow `ci-test.yml` starts on a push to `main` and on `workflow_dispatch`. Start it by hand
 on a branch: `gh workflow run ci-test.yml --ref upstream/<topic>`.
